@@ -11,22 +11,31 @@ struct slot{
   bool isfree;
 };
 
+struct memblock{
+  unsigned int memArray[POOLSIZE];
+  struct slot slot[POOLSIZE/SLOTSIZE];
+};
+/*
 static unsigned int memArray[POOLSIZE];
-static unsigned int numOfSlots = POOLSIZE/SLOTSIZE;
 static struct slot slot[POOLSIZE/SLOTSIZE];
+*/
+static unsigned int numOfSlots = POOLSIZE/SLOTSIZE;
 
-
-
-static void initMem(unsigned int *arg)
+static void initMem(struct memblock *arg)
 {
   for(int i = 0; i<POOLSIZE; i++)
   {
-    *(arg+i) = 0;
+    arg->memArray[i] = 0;
   }
+  for(int i = 0; i<numOfSlots; i++)
+  {
+    arg->slot[i].isfree = true;
+  }
+
   return;
 } 
 
-static unsigned int *pmalloc()
+static unsigned int *pmalloc(struct memblock *arg)
 {
   static unsigned int i = 0;
 
@@ -36,12 +45,12 @@ static unsigned int *pmalloc()
 
   if(i == 0) 
   {
-    slot[0].isfree = false;
-    return &memArray[i++];
+    arg->slot[0].isfree = false;
+    return &arg->memArray[i++];
   }
   unsigned int temp = ((i++) << 5) ;
   printf("temp:%d --- ",temp);
-  return (&memArray[temp-1]);
+  return (&arg->memArray[temp-1]);
 }
 
 static unsigned int pfree(unsigned int *arg)
@@ -52,15 +61,17 @@ static unsigned int pfree(unsigned int *arg)
 
 int main(void)
 {
-  printf("Global array pointer: %d \n", (int)memArray);
+  struct memblock mem;
 
-  initMem(memArray);
+  printf("Global array pointer: %d \n", (int)mem.memArray);
+
+  initMem(&mem);
   
   unsigned int *temp;
   for (int i = 0; i < numOfSlots; i++)
   {
-    temp = pmalloc();
-    printf("Allocated pointer: %d  diff: %d \n", (int)temp, ((int)temp - (int)&memArray[0])/4);
+    temp = pmalloc(&mem);
+    printf("Allocated pointer: %d  diff: %d \n", (int)temp, ((int)temp - (int)&mem.memArray[0])/4);
 
   }
 
