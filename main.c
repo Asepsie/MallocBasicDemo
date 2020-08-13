@@ -16,10 +16,7 @@ struct memblock{
   unsigned int memArray[POOLSIZE];
   struct slot slot[POOLSIZE/SLOTSIZE];
 };
-/*
-static unsigned int memArray[POOLSIZE];
-static struct slot slot[POOLSIZE/SLOTSIZE];
-*/
+
 static unsigned int numOfSlots = POOLSIZE/SLOTSIZE;
 
 static void initMem(struct memblock *arg)
