@@ -7,14 +7,14 @@
 #define SLOTSIZE      32
 
 struct slot{
-  unsigned int *p;
-  unsigned int slotpos;
-  bool isfree;
+    unsigned int *p;
+    unsigned int slotpos;
+    bool isfree;
 };
 
 struct memblock{
-  unsigned int memArray[POOLSIZE];
-  struct slot slot[POOLSIZE/SLOTSIZE];
+    unsigned int memArray[POOLSIZE];
+    struct slot slot[POOLSIZE/SLOTSIZE];
 };
 
 static unsigned int numOfSlots = POOLSIZE/SLOTSIZE;
@@ -29,35 +29,50 @@ static void initMem(struct memblock *arg)
   {
     arg->slot[i].isfree = true;
     arg->slot[i].slotpos = i;
+    arg->slot[i].p = &(arg->memArray[((i) << 5)]);
   }
 
   return;
 } 
 
-static struct slot *pmalloc(struct memblock *arg)
+static unsigned int *pmalloc(struct memblock *arg)
 {
-  unsigned int i = 0;
+    unsigned int i = 0;
 
-  if (i >= (numOfSlots)) return 0;
+    if (i >= (numOfSlots)) return 0;
 
-  for (i = 0; i<numOfSlots; i++)
-  {
-    printf("Searching free slot i:%d @: %d --- \n",i, (int)&(arg->memArray[((i) << 5)-1]));
-    if(arg->slot[i].isfree == true)
+    for (i = 0; i<numOfSlots; i++)
     {
-      arg->slot[i].p = &(arg->memArray[((i) << 5)]);
-      arg->slot[i].isfree = false;
-      arg->slot[i].slotpos = i;
-      return ((struct slot *) &(arg->slot[i]));
+        printf("Searching free slot i:%d @: %d --- \n",i, (int)&(arg->memArray[((i) << 5)-1]));
+        if(arg->slot[i].isfree == true)
+        {
+            arg->slot[i].isfree = false;
+            return (arg->slot[i].p);
+        }
     }
-  }
-  return 0;
-}
+    return 0;
+    }
 
-static unsigned int ppfree(struct memblock *arg, unsigned int slotNumber)
+// Return the slot number that has been freed or '-1' if input pointer is not ok.
+static unsigned int ppfree(struct memblock *arg, unsigned int *p)
 {
-  arg->slot[slotNumber].isfree = true;
-  return 0;
+    unsigned int i, ret;
+    for (i = 0; i<numOfSlots; i++)
+    {
+        if(arg->slot[i].p == p)
+        {
+            arg->slot[i].isfree = true;
+            // Might want to 
+            ret = i;
+            break;
+        }
+        else
+        {
+            ret = -1;
+        }
+    }
+
+  return ret;
 }
 
 
@@ -69,17 +84,17 @@ int main(void)
 
   initMem(&mem);
   
-  struct slot *temp;
+  unsigned int *temp;
+  unsigned int *tempTestFree;
   
   for (int i = 0; i < 5; i++)
   {
     temp = pmalloc(&mem);
-    printf("Allocated pointer: %d  diff: %d \n", (int)temp->p, ((int)temp->p - (int)&mem.memArray[0])/4);
+    printf("Allocated pointer: %d  diff: %d \n", (int)temp, ((int)temp - (int)&mem.memArray[0])/4);
+    if(i==2) tempTestFree = temp;
   }
 
-  printf("before free \n");
-
-  ppfree(&mem, 1);
+  ppfree(&mem, tempTestFree);
   for (int i = 0; i < 10; i++)
   {
     printf("After free %d - %d \n", i, (int)mem.slot[i].isfree);
