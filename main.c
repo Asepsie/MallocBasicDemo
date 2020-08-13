@@ -16,10 +16,7 @@ struct memblock{
   unsigned int memArray[POOLSIZE];
   struct slot slot[POOLSIZE/SLOTSIZE];
 };
-/*
-static unsigned int memArray[POOLSIZE];
-static struct slot slot[POOLSIZE/SLOTSIZE];
-*/
+
 static unsigned int numOfSlots = POOLSIZE/SLOTSIZE;
 
 static void initMem(struct memblock *arg)
@@ -45,12 +42,13 @@ static struct slot *pmalloc(struct memblock *arg)
 
   for (i = 0; i<numOfSlots; i++)
   {
-    printf("Searching free slot i:%d --- ",i);
+    printf("Searching free slot i:%d @: %d --- \n",i, (int)&(arg->memArray[((i) << 5)-1]));
     if(arg->slot[i].isfree == true)
     {
-      arg->slot[i].p = &(arg->memArray[((i) << 5)-1]);
+      arg->slot[i].p = &(arg->memArray[((i) << 5)]);
       arg->slot[i].isfree = false;
-      return ((struct slot *) (arg->slot));
+      arg->slot[i].slotpos = i;
+      return ((struct slot *) &(arg->slot[i]));
     }
   }
   return 0;
@@ -81,7 +79,7 @@ int main(void)
 
   printf("before free \n");
 
-  ppfree(&mem, 1); 
+  ppfree(&mem, 1);
   for (int i = 0; i < 10; i++)
   {
     printf("After free %d - %d \n", i, (int)mem.slot[i].isfree);
